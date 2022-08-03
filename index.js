@@ -23,6 +23,14 @@ let persons = [
       "number": "39-23-6423122"
     }
 ]
+app.get('/', (request, response) => {
+    let reply = '<p>Phonebook has info for '
+    reply += persons.length.toString()
+    reply += '</p><p>'
+    reply += new Date()
+    reply += '</p>'
+    response.send(reply)
+  })
   
 app.get('/api/persons', (request, response) => {
     response.json(persons)
