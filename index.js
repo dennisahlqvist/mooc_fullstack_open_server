@@ -63,7 +63,26 @@ app.post('/api/persons', (request, response) => {
     //max = Number.POSITIVE_INFINITY
     const newId = Math.floor(Math.random() * (max - 0) + 0); 
     const person = request.body
-    person.id = newId + 1
+    if (!person.name) {
+        return response.status(400).json({ 
+          error: 'name is missing' 
+        })
+      }    
+    if (!person.number) {
+        return response.status(400).json({ 
+          error: 'number is missing' 
+        })
+      }
+
+    const personsWithName = persons.filter((person1) => person1.name.toLowerCase()==(person.name.toLowerCase()))
+    if (personsWithName.length != 0) {
+        
+        return response.status(403).json({ 
+          error: 'name already exists in the phonebook' 
+        })
+      }
+
+    person.id = newId
     persons = persons.concat(person)
     response.json(person)
   })
