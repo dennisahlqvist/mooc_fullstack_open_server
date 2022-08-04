@@ -4,6 +4,6 @@ tasks:
       npm install
     command: npm run dev
 ports:
-  - port: 3000
+  - port: 3001
     onOpen: open-preview
     visibility: public
