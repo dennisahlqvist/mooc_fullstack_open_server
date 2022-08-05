@@ -11,7 +11,7 @@ app.use(express.json())
 morgan.token('body', (req, res) => JSON.stringify(req.body));
 app.use(morgan(':method :url :status  :req[content-length] - :response-time ms :body'));
 
-app.get('/', (request, response) => {
+app.get('/info', (request, response) => {
     let reply = '<p>Phonebook has info for '
     reply += persons.length.toString()
     reply += '</p><p>'
