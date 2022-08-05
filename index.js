@@ -1,8 +1,9 @@
+require('dotenv').config()
 const express = require('express')
 const app = express()
 var morgan = require('morgan')
 const cors = require('cors')
-const mongoose = require('mongoose')
+const Person = require('./models/person')
 
 app.use(express.static('build'))
 app.use(cors())
@@ -10,42 +11,6 @@ app.use(express.json())
 morgan.token('body', (req, res) => JSON.stringify(req.body));
 app.use(morgan(':method :url :status  :req[content-length] - :response-time ms :body'));
 
-const password = "password"
-
-const url = `mongodb+srv://fullstack:${password}@cluster0.xeclkwq.mongodb.net/phonebookApp?retryWrites=true&w=majority`
-
-mongoose.connect(url)
-
-const personSchema = new mongoose.Schema({
-  name: String,
-  number: String
-})
-
-const Person = mongoose.model('Person', personSchema)
-
-
-let persons = [
-    { 
-      "id": 1,
-      "name": "Arto Hellas", 
-      "number": "040-123456"
-    },
-    { 
-      "id": 2,
-      "name": "Ada Lovelace", 
-      "number": "39-44-5323523"
-    },
-    { 
-      "id": 3,
-      "name": "Dan Abramov", 
-      "number": "12-43-234345"
-    },
-    { 
-      "id": 4,
-      "name": "Mary Poppendieck", 
-      "number": "39-23-6423122"
-    }
-]
 app.get('/', (request, response) => {
     let reply = '<p>Phonebook has info for '
     reply += persons.length.toString()
@@ -81,11 +46,12 @@ app.delete('/api/persons/:id', (request, response) => {
   })
 
 app.post('/api/persons', (request, response) => {
+  const body = request.body
 
-    var max = 4503599627370495;
-    //max = Number.POSITIVE_INFINITY
-    const newId = Math.floor(Math.random() * (max - 0) + 0); 
-    const person = request.body
+  const person = new Person({
+    name: body.name,
+    number: body.number
+  })
     if (!person.name) {
         return response.status(400).json({ 
           error: 'name is missing' 
@@ -97,17 +63,9 @@ app.post('/api/persons', (request, response) => {
         })
       }
 
-    const personsWithName = persons.filter((person1) => person1.name.toLowerCase()==(person.name.toLowerCase()))
-    if (personsWithName.length != 0) {
-        
-        return response.status(403).json({ 
-          error: 'name already exists in the phonebook' 
+  person.save().then(savedPerson => {
+    response.json(savedPerson)
         })
-      }
-
-    person.id = newId
-    persons = persons.concat(person)
-    response.json(person)
   })
   
   const PORT = process.env.PORT || 3001
