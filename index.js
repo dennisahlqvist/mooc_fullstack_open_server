@@ -39,7 +39,6 @@ app.get('/api/persons/:id', (request, response) => {
   })
 
 app.delete('/api/persons/:id', (request, response, next) => {
-    //const id = Number(request.params.id)
     Person.findByIdAndRemove(request.params.id)
       .then(result =>{
     response.status(204).end()
