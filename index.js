@@ -12,13 +12,15 @@ morgan.token('body', (req, res) => JSON.stringify(req.body));
 app.use(morgan(':method :url :status  :req[content-length] - :response-time ms :body'));
 
 app.get('/info', (request, response) => {
+  Person.find({}).then(persons => {  
     let reply = '<p>Phonebook has info for '
     reply += persons.length.toString()
     reply += '</p><p>'
     reply += new Date()
     reply += '</p>'
     response.send(reply)
-  })
+  }).catch(error => next(error))
+})
   
 app.get('/api/persons', (request, response) => {
     Person.find({}).then(persons => {  
@@ -26,16 +28,17 @@ app.get('/api/persons', (request, response) => {
   })
   })
   
-app.get('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
-    const person = persons.find(person =>{ 
-        return person.id === id
-    })
+app.get('/api/persons/:id', (request, response, next) => {
+  const {id}  = request.params
+    Person.findById(id)
+      .then((person) => {
     if (person) {
         response.json(person)
       } else {
         response.status(404).end()
       }
+      }).catch(error => next(error))
+    
   })
 
 app.delete('/api/persons/:id', (request, response, next) => {
@@ -86,7 +89,7 @@ app.post('/api/persons', (request, response) => {
     console.error(error.message)
   
     if (error.name === 'CastError') {
-      return response.status(400).send({ error: 'malformatted id' })
+      return response.status(400).send({ error: 'malformatted id or person not found' })
     } else {
       return response.status(500).send({ error: 'server error' })
     }
