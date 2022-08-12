@@ -11,7 +11,7 @@ app.use(express.json())
 morgan.token('body', (req, res) => JSON.stringify(req.body));
 app.use(morgan(':method :url :status  :req[content-length] - :response-time ms :body'));
 
-app.get('/info', (request, response) => {
+app.get('/info', (request, response, next) => {
   Person.find({}).then(persons => {  
     let reply = '<p>Phonebook has info for '
     reply += persons.length.toString()
@@ -22,7 +22,7 @@ app.get('/info', (request, response) => {
   }).catch(error => next(error))
 })
   
-app.get('/api/persons', (request, response) => {
+app.get('/api/persons', (request, response, next) => {
     Person.find({}).then(persons => {  
     response.json(persons)
   })
@@ -49,19 +49,19 @@ app.delete('/api/persons/:id', (request, response, next) => {
       .catch(error => next(error))
   })
 
-app.post('/api/persons', (request, response) => {
+app.post('/api/persons', (request, response, next) => {
   const body = request.body
 
   const person = new Person({
     name: body.name,
     number: body.number
   })
-    if (!person.name) {
+    if (!body.name) {
         return response.status(400).json({ 
           error: 'name is missing' 
         })
       }    
-    if (!person.number) {
+    if (!body.number) {
         return response.status(400).json({ 
           error: 'number is missing' 
         })
@@ -70,6 +70,7 @@ app.post('/api/persons', (request, response) => {
   person.save().then(savedPerson => {
     response.json(savedPerson)
         })
+        .catch(error => next(error))
   })
     
   app.put('/api/persons/:id', (request, response, next) =>{
@@ -79,7 +80,7 @@ app.post('/api/persons', (request, response) => {
       number: body.number
     }
 
-    Person.findByIdAndUpdate(request.params.id,person, { new: true })
+    Person.findByIdAndUpdate(request.params.id,person, { new: true, runValidators: true })
     .then(updatedPerson => {
       response.json(updatedPerson)
     }).catch(error => next(error))
@@ -89,9 +90,12 @@ app.post('/api/persons', (request, response) => {
     console.error(error.message)
   
     if (error.name === 'CastError') {
-      return response.status(400).send({ error: 'malformatted id or person not found' })
-    } else {
-      return response.status(500).send({ error: 'server error' })
+      return response.status(400).json({ error: 'malformatted id or person not found' })
+    }else if (error.name === 'ValidatorError') {
+      return response.status(400).json({ error: error.message })
+    }
+    else {
+      return response.status(400).json({ error: error.message })
     }
   
     next(error)
